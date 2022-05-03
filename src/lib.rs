@@ -19,7 +19,7 @@
 //! - No features I don't need.
 
 pub use error::{FileRotationError, Result};
-use std::path::{Path, PathBuf};
+use std::path::{is_separator, Path, PathBuf};
 
 mod error;
 
@@ -50,13 +50,27 @@ impl FileRotation {
             file,
         } = self;
 
+        let is_dir = file
+            .to_str()
+            .and_then(|path| path.chars().last())
+            .map(is_separator)
+            .unwrap_or(false);
+
+        if is_dir {
+            return Err(FileRotationError::NotAFile(file));
+        }
+
         // enforce the file to have an extension
         let log_file = match file.extension() {
             Some(_) => file,
             None => file.with_extension("log"),
         };
 
-        let log_file_name = log_file.file_name().unwrap();
+        let log_file_name = match log_file.file_name() {
+            Some(log_file_name) => dbg!(log_file_name),
+            _ => return Err(FileRotationError::NotAFile(log_file)),
+        };
+
         let log_file_dir = log_file
             .parent()
             .and_then(|p| {

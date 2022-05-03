@@ -1,8 +1,11 @@
+use std::path::PathBuf;
+
 pub type Result<T> = std::result::Result<T, FileRotationError>;
 
 #[non_exhaustive]
 #[derive(Debug)]
 pub enum FileRotationError {
+    NotAFile(PathBuf),
     Io(std::io::Error),
 }
 
@@ -13,6 +16,9 @@ impl std::fmt::Display for FileRotationError {
         match self {
             FileRotationError::Io(err) => {
                 write!(f, "FileRotation io error: {err}")
+            }
+            FileRotationError::NotAFile(path) => {
+                write!(f, "path {path:?} is not a file")
             }
         }
     }

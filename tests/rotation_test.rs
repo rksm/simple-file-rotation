@@ -1,4 +1,4 @@
-use simple_file_rotation::{FileRotation, Result};
+use simple_file_rotation::{FileRotation, FileRotationError, Result};
 use std::io::Write;
 use std::{fs, path::PathBuf};
 
@@ -144,4 +144,20 @@ fn dont_create_more_than_allowed_rotated_files() -> Result<()> {
     );
 
     Ok(())
+}
+
+#[test]
+fn invalid_file() {
+    assert!(matches!(
+        FileRotation::new("..").rotate(),
+        Err(FileRotationError::NotAFile(_))
+    ));
+    assert!(matches!(
+        FileRotation::new("").rotate(),
+        Err(FileRotationError::NotAFile(_))
+    ));
+    assert!(matches!(
+        FileRotation::new("foo/bar/").rotate(),
+        Err(FileRotationError::NotAFile(_))
+    ));
 }
