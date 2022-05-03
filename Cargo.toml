@@ -5,6 +5,8 @@ edition = "2021"
 authors = ["Robert Krahn <robert@kra.hn>"]
 repository = "https://github.com/rksm/simple-file-rotation"
 license-file = "LICENSE"
+description = "A very simple file rotator."
+exclude = [".dir-locals.el"]
 
 [dependencies]
 anyhow = "1.0.57"
