@@ -13,6 +13,10 @@
 //! # Ok(())
 //! # }
 //! ```
+//!
+//! Why yet another file rotation library?
+//! - No additional dependencies.
+//! - No features I don't need.
 
 pub use error::{FileRotationError, Result};
 use std::path::{Path, PathBuf};
