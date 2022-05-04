@@ -12,3 +12,7 @@ FileRotation::new("my.log")
     .max_old_files(2)
     .rotate()?;
 ```
+
+Why yet another file rotation library?
+- No additional dependencies.
+- No features I don't need.

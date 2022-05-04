@@ -129,8 +129,6 @@ impl FileRotation {
         }
 
         for (entry, new_file_name) in rotations.into_iter().rev() {
-            println!("renaming {:?} -> {new_file_name:?}", entry.path());
-
             if let Err(err) = std::fs::rename(entry.path(), log_file_dir.join(new_file_name)) {
                 eprintln!("Error rotating log file {entry:?}: {err}");
             }
