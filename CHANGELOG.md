@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.3.3] - 2022-05-05
+### Changed
+- Remove debug logging
+
 ## [0.3.2] - 2022-05-04
 ### Changed
 - Remove debug logging

@@ -67,7 +67,7 @@ impl FileRotation {
         };
 
         let log_file_name = match log_file.file_name() {
-            Some(log_file_name) => dbg!(log_file_name),
+            Some(log_file_name) => log_file_name,
             _ => return Err(FileRotationError::NotAFile(log_file)),
         };
 
