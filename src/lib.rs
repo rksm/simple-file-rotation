@@ -26,6 +26,7 @@ mod error;
 pub struct FileRotation {
     max_old_files: Option<usize>,
     file: PathBuf,
+    extension: String,
 }
 
 /// See module documentation.
@@ -34,6 +35,7 @@ impl FileRotation {
         Self {
             file: file.as_ref().to_path_buf(),
             max_old_files: None,
+            extension: "log".to_string(),
         }
     }
 
@@ -44,10 +46,17 @@ impl FileRotation {
         self
     }
 
+    /// Set a file extension to use if none is present in the original filename
+    pub fn file_extension(mut self, extension: String) -> Self {
+        self.extension = extension;
+        self
+    }
+
     pub fn rotate(self) -> Result<()> {
         let Self {
             max_old_files,
             file,
+            extension,
         } = self;
 
         let is_dir = file
@@ -61,17 +70,17 @@ impl FileRotation {
         }
 
         // enforce the file to have an extension
-        let log_file = match file.extension() {
+        let data_file = match file.extension() {
             Some(_) => file,
-            None => file.with_extension("log"),
+            None => file.with_extension(&extension),
         };
 
-        let log_file_name = match log_file.file_name() {
-            Some(log_file_name) => log_file_name,
-            _ => return Err(FileRotationError::NotAFile(log_file)),
+        let data_file_name = match data_file.file_name() {
+            Some(data_file_name) => data_file_name,
+            _ => return Err(FileRotationError::NotAFile(data_file)),
         };
 
-        let log_file_dir = log_file
+        let data_file_dir = data_file
             .parent()
             .and_then(|p| {
                 let dir = p.to_path_buf();
@@ -84,29 +93,27 @@ impl FileRotation {
             .unwrap_or_else(|| PathBuf::from("."));
 
         let mut rotations = Vec::new();
-        for entry in std::fs::read_dir(&log_file_dir)? {
-            let entry = match entry {
-                Err(_) => continue,
-                Ok(entry) => entry,
-            };
+        for entry in (std::fs::read_dir(&data_file_dir)?).flatten() {
+            let direntry_pathbuf = entry.path();
 
             let file_name = entry.file_name();
-            if file_name == log_file_name {
+            if file_name == data_file_name {
                 rotations.push((
-                    entry,
-                    log_file_name.to_string_lossy().replace(".log", ".1.log"),
+                    direntry_pathbuf.clone(),
+                    data_file_name
+                        .to_string_lossy()
+                        .replace(&format!(".{}", &extension), &format!(".1.{}", &extension)),
                 ));
-                continue;
             }
 
-            let log_file_name = log_file_name.to_string_lossy();
+            let data_file_name = data_file_name.to_string_lossy();
             let file_name = file_name.to_string_lossy();
             let parts = file_name.split('.').collect::<Vec<_>>();
             match parts[..] {
-                [prefix, n, ext] if !prefix.is_empty() && log_file_name.starts_with(prefix) => {
+                [prefix, n, ext] if !prefix.is_empty() && data_file_name.starts_with(prefix) => {
                     if let Ok(n) = n.parse::<usize>() {
                         let new_name = format!("{prefix}.{}.{ext}", n + 1);
-                        rotations.push((entry, new_name));
+                        rotations.push((direntry_pathbuf, new_name));
                     }
                 }
                 _ => continue,
@@ -117,11 +124,11 @@ impl FileRotation {
 
         if let Some(max_old_files) = max_old_files {
             while rotations.len() > max_old_files {
-                if let Some((log_file, _)) = rotations.pop() {
-                    if let Err(err) = std::fs::remove_file(log_file.path()) {
+                if let Some((data_file, _)) = rotations.pop() {
+                    if let Err(err) = std::fs::remove_file(data_file.clone()) {
                         eprintln!(
                             "Rotating logs: cannot remove file {}: {err}",
-                            log_file.path().display()
+                            data_file.display()
                         );
                     }
                 }
@@ -129,8 +136,8 @@ impl FileRotation {
         }
 
         for (entry, new_file_name) in rotations.into_iter().rev() {
-            if let Err(err) = std::fs::rename(entry.path(), log_file_dir.join(new_file_name)) {
-                eprintln!("Error rotating log file {entry:?}: {err}");
+            if let Err(err) = std::fs::rename(entry.clone(), data_file_dir.join(new_file_name)) {
+                eprintln!("Error rotating file {entry:?}: {err}");
             }
         }
 
