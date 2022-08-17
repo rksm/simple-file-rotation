@@ -46,7 +46,7 @@ fn no_file_to_rotate() -> Result<()> {
 fn single_file_to_rotate() -> Result<()> {
     let fixture = Fixture::new("single_file_to_rotate");
 
-    let file = fixture.test_dir.join("logfile.log");
+    let file = fixture.test_dir.join("logfile.txt");
     let content = "testing\ntesting\n";
 
     {
@@ -57,7 +57,7 @@ fn single_file_to_rotate() -> Result<()> {
         write!(file, "{content}")?;
     }
 
-    FileRotation::new(&file).rotate()?;
+    FileRotation::new(&file).file_extension("txt").rotate()?;
 
     let mut dir = fs::read_dir(&fixture.test_dir)?;
     let entry = match dir.next().unwrap() {
@@ -67,7 +67,7 @@ fn single_file_to_rotate() -> Result<()> {
 
     assert!(dir.next().is_none(), "more than one file?");
 
-    let file = fixture.test_dir.join("logfile.1.log");
+    let file = fixture.test_dir.join("logfile.1.txt");
     assert_eq!(entry.path(), file);
     assert_eq!(fs::read_to_string(file)?, content);
 

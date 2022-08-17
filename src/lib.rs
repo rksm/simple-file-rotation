@@ -47,8 +47,8 @@ impl FileRotation {
     }
 
     /// Set a file extension to use if none is present in the original filename
-    pub fn file_extension(mut self, extension: String) -> Self {
-        self.extension = extension;
+    pub fn file_extension(mut self, extension: impl ToString) -> Self {
+        self.extension = extension.to_string();
         self
     }
 
